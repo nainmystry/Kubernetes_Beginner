@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment #what is the kind of file, can be deployment, Service, Config, Secret
+metadata: 
+ name: first-mongodb-deployment #name of the deployment
+ labels:
+  app: mongodb
+spec: 
+ replicas: 1 #no of pod replicas to be created
+ selector:
+  matchLabels:
+   app: mongodb 
+ template: 
+  metadata: 
+   labels:
+    app: mongodb #other files will search for this pod with this label
+  spec:
+   containers: #provide container config inside this
+   - name: mongodb
+     image: mongo #docker image name 
+     ports: 
+     - containerPort: 27017
+     env: 
+     - name: MONGO_INITDB_ROOT_USERNAME #this are env variable can be found on docker image hub
+       valueFrom:
+       secretKeyRef:
+        name: mongodb-secret #secret file name inside metadata
+        key: mongo-root-username
+     - name: MONGO_INITDB_ROOT_PASSWORD
+       valueFrom:
+       secretKeyRef:
+        name: mongodb-secret
+        key: mongo-root-password
+
+--- #3 dashes in yaml indicates new file. 
+#so here we can define the service for above pod
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: mongodb-service
+spec: 
+ selector: 
+  app: mongodb  #this selector indicates that the service will select the pods having label mongodb
+ ports:
+  - protocol: TCP
+    port: 27017 # service port 
+    targetPort: 27017 #container port can be found on docker mongo documentation
+
+
+
